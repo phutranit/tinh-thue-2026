@@ -7,6 +7,11 @@ import {
 } from 'lucide-react';
 
 const App = () => {
+  // --- HIỆU ỨNG: ĐẶT TIÊU ĐỀ WEB ---
+  useEffect(() => {
+    document.title = "Tính Thuế TNCN 2026 | Công Cụ So Sánh Luật Mới & Cũ";
+  }, []);
+
   const [activeTab, setActiveTab] = useState('salary');
 
   // --- STATES CHO TAB LƯƠNG ---
@@ -53,7 +58,21 @@ const App = () => {
 
   const handleInsuranceSalaryChange = (val) => {
     setInsuranceSalary(val);
+    // Nếu số nhập vào khác tổng thu nhập -> Tự động bỏ tích "Full bảo hiểm"
     if (val !== income) setUseFullInsurance(false);
+  };
+
+  // Helper: Format số hiển thị (VD: 1000000 -> 1.000.000)
+  const formatNumberInput = (num) => {
+    if (num === undefined || num === null) return '';
+    return new Intl.NumberFormat('vi-VN').format(num);
+  };
+
+  // Helper: Parse chuỗi nhập liệu về số (VD: "1.000.000" -> 1000000)
+  const parseNumberInput = (str) => {
+    if (!str) return 0;
+    // Xóa dấu chấm và các ký tự không phải số
+    return Number(str.replace(/\./g, '').replace(/[^0-9]/g, ''));
   };
 
   const formatCurrency = (value) => {
@@ -245,39 +264,44 @@ const App = () => {
                     </h3>
                     
                     <div className="space-y-5">
-                      {/* Income Input */}
+                      {/* Income Input (Auto-Format) */}
                       <div className="group">
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-blue-700 transition-colors">Tổng thu nhập (Tháng)</label>
                         <div className="relative">
                           <input
-                            type="number"
-                            value={income}
-                            onChange={(e) => setIncome(Number(e.target.value))}
-                            className="w-full pl-4 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none font-bold text-slate-800 shadow-sm transition-all"
+                            type="text" 
+                            value={formatNumberInput(income)}
+                            onChange={(e) => setIncome(parseNumberInput(e.target.value))}
+                            className="w-full pl-4 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none font-bold text-slate-800 shadow-sm transition-all text-lg tracking-wide"
+                            placeholder="0"
                           />
-                          <span className="absolute right-4 top-3.5 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
+                          <span className="absolute right-4 top-4 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
                         </div>
                       </div>
 
-                      {/* Insurance Salary Input */}
+                      {/* Insurance Salary Input (Auto-Format) */}
                       <div className="group">
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-blue-700 transition-colors">Lương đóng bảo hiểm</label>
                         <div className="relative">
                           <input
-                            type="number"
-                            value={insuranceSalary}
-                            onChange={(e) => handleInsuranceSalaryChange(Number(e.target.value))}
-                            className={`w-full pl-4 pr-12 py-3.5 border rounded-xl outline-none font-bold shadow-sm transition-all ${
+                            type="text"
+                            value={formatNumberInput(insuranceSalary)}
+                            onChange={(e) => handleInsuranceSalaryChange(parseNumberInput(e.target.value))}
+                            className={`w-full pl-4 pr-12 py-3.5 border rounded-xl outline-none font-bold shadow-sm transition-all text-lg tracking-wide ${
                               useFullInsurance 
                                 ? 'bg-blue-50/50 border-blue-200 text-blue-800 focus:ring-4 focus:ring-blue-100' 
                                 : 'bg-white border-slate-200 text-slate-800 focus:ring-4 focus:ring-slate-100 focus:border-slate-400'
                             }`}
+                            placeholder="0"
                           />
-                          <span className="absolute right-4 top-3.5 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
+                          <span className="absolute right-4 top-4 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
                         </div>
                         
-                        <div className="mt-3 flex items-center justify-between">
-                          <label className="flex items-center gap-2 cursor-pointer group/chk">
+                        {/* Checkbox & Region Selector Container - FIXED LAYOUT */}
+                        <div className="mt-4 space-y-3">
+                          
+                          {/* Checkbox Full Lương */}
+                          <label className="flex items-center gap-2 cursor-pointer group/chk select-none">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${useFullInsurance ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
                               <input
                                 type="checkbox"
@@ -287,30 +311,42 @@ const App = () => {
                               />
                               {useFullInsurance && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                             </div>
-                            <span className="text-xs font-medium text-slate-600 group-hover/chk:text-blue-700">Đóng full lương</span>
+                            <span className="text-sm font-medium text-slate-600 group-hover/chk:text-blue-700">Đóng bảo hiểm trên toàn bộ thu nhập</span>
                           </label>
 
-                          {/* Region Selector */}
-                          <div className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-slate-200 hover:border-blue-300 transition-colors">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            <select 
-                              value={regionMinWage} 
-                              onChange={(e) => setRegionMinWage(Number(e.target.value))}
-                              className="text-xs bg-transparent text-slate-600 font-semibold border-none focus:ring-0 cursor-pointer p-0 pr-1"
-                            >
-                              <option value={4960000}>Vùng 1</option>
-                              <option value={4410000}>Vùng 2</option>
-                              <option value={3860000}>Vùng 3</option>
-                              <option value={3450000}>Vùng 4</option>
-                            </select>
+                          {/* Region Selector - CẢI TIẾN GIAO DIỆN */}
+                          <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-blue-300 transition-colors">
+                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wide">
+                              <MapPin className="w-3.5 h-3.5" />
+                              Vùng (Xác định trần BHTN)
+                            </div>
+                            <div className="relative">
+                              <select 
+                                value={regionMinWage} 
+                                onChange={(e) => setRegionMinWage(Number(e.target.value))}
+                                className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-100 appearance-none cursor-pointer"
+                              >
+                                <option value={4960000}>Vùng 1 (Hà Nội, TP.HCM...)</option>
+                                <option value={4410000}>Vùng 2 (Đà Nẵng, Cần Thơ...)</option>
+                                <option value={3860000}>Vùng 3 (Bắc Ninh, Hải Dương...)</option>
+                                <option value={3450000}>Vùng 4 (Các tỉnh còn lại)</option>
+                              </select>
+                              <div className="absolute right-3 top-3 pointer-events-none">
+                                <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
+                              </div>
+                            </div>
+                            <div className="mt-2 flex justify-between items-center text-xs text-slate-500">
+                              <span>Trần BHTN:</span>
+                              <span className="font-bold text-slate-700">{formatCurrency(regionMinWage * 20)}</span>
+                            </div>
                           </div>
                         </div>
 
                          {/* Warning if capped */}
                          {insuranceSalary > regionMinWage * 20 && (
-                            <div className="mt-2 text-[11px] text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-100 flex items-start gap-1">
+                            <div className="mt-2 text-[11px] text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-100 flex items-start gap-1 animate-pulse">
                               <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                              Đã vượt trần BHTN ({formatCurrency(regionMinWage*20)})
+                              Lương vượt trần BHTN. Chỉ đóng tối đa trên {formatCurrency(regionMinWage*20)}
                             </div>
                           )}
                       </div>
@@ -437,9 +473,9 @@ const App = () => {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-slate-400 text-xs uppercase bg-white border-b border-slate-50">
-                            <th className="px-6 py-3 font-bold text-left w-1/3">Khoản mục</th>
-                            <th className="px-6 py-3 font-bold text-right w-1/3">Luật Cũ</th>
-                            <th className="px-6 py-3 font-bold text-right text-blue-600 w-1/3">Luật Mới (2026)</th>
+                            <th className="px-6 py-3 font-bold text-left w-1/3 min-w-[120px]">Khoản mục</th>
+                            <th className="px-6 py-3 font-bold text-right w-1/3 min-w-[120px]">Luật Cũ</th>
+                            <th className="px-6 py-3 font-bold text-right text-blue-600 w-1/3 min-w-[120px]">Luật Mới (2026)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -500,12 +536,13 @@ const App = () => {
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-emerald-700 transition-colors">Doanh thu cả năm</label>
                         <div className="relative">
                            <input
-                            type="number"
-                            value={revenueYear}
-                            onChange={(e) => setRevenueYear(Number(e.target.value))}
-                            className="w-full pl-4 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none font-bold text-slate-800 shadow-sm transition-all"
+                            type="text" 
+                            value={formatNumberInput(revenueYear)}
+                            onChange={(e) => setRevenueYear(parseNumberInput(e.target.value))}
+                            className="w-full pl-4 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none font-bold text-slate-800 shadow-sm transition-all text-lg tracking-wide"
+                            placeholder="0"
                           />
-                          <span className="absolute right-4 top-3.5 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
+                          <span className="absolute right-4 top-4 text-slate-400 text-xs font-bold pointer-events-none">VND</span>
                         </div>
                         <div className="text-xs text-slate-500 mt-2 font-medium px-2">
                           ≈ {formatCurrency(revenueYear/12)} / tháng
